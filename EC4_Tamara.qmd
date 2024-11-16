@@ -1,0 +1,911 @@
+---
+title: "Data Analytics"
+author: "Prof. Jose Luis Ugarte Chamorro"
+lang: "es-es"
+format:
+  html:
+    code-fold: true
+lightbox: true
+execute:
+  enabled: false
+---
+
+<img src="logo.jpg" style="width: 250px; position:absolute; top:0; right:0; padding:10px;"/>
+
+------------------------------------------------------------------------
+
+<h1 style="text-align: center;">
+
+Evaluación continua 4
+
+</h1>
+
+------------------------------------------------------------------------
+
+## 1. Introducción
+
+El presente proyecto estudiamos como mejorar el posicionamiento de un restaurante en una página web que califica restaurantes.
+
+1.1 Ingrese a la página web de yelp y describa el tipo de negocio.
+
+1.2 Busque la cantidad de restaurantes, el tiempo de funcionamiento y las ganancias de los restaurantes.
+
+1.3 Explique porque una buena evaluación ayuda al restaurante.
+
+## 2. Descripción del data set
+
+Estudiamos el dataset yelp_train de datos de entrenamiento y yelp_test de datos de prueba. Las cuales tienen las mismas variables.
+
+-   **stars**: Evaluación del usuario
+
+-   **review_count**: Número de evaluaciones
+
+-   **GoodForKids**: Apto para niños
+
+-   **Alcohol**: Venta de bebidas con alcohol
+
+-   **BusinessAcceptsCreditCards**:
+
+-   **WiFi**:
+
+-   **BikeParking**:
+
+-   **ByAppointmentOnly**:
+
+-   **WheelechairAccessible**:
+
+-   **OutdoorSeating**:
+
+-   **RestaurantsReservations**:
+
+-   **DogsAllowed:**
+
+-   **Caters**:
+
+2.0 Lea los datos considerando que yelp_train son los datos de entrenamiento y yelp_test son los datos de prueba.
+
+```{r}
+df_train <- read.csv("yelp_train.csv")
+df_test <- read.csv("yelp_test.csv")
+```
+
+2.1 Complete la descripción de la data en una tabla indicando el tipo de dato y el rango de valores.
+
+**Para la data de datos de entrenamiento:**
+
+```{r}
+summary(df_train)
+```
+
+**Para la data de datos de prueba:**
+
+```{r}
+summary(df_test)
+```
+
+2.2 Visualice los primeros datos de la tabla e indique si hay datos faltantes.
+
+**Para la data de datos de entrenamiento:**
+
+```{r}
+head(df_train)
+
+missing_counts_train <- colSums(df_train == "(Missing)")
+missing_table_train <- data.frame(
+  Variable = names(missing_counts_train),
+  Missing_Count = as.numeric(missing_counts_train)
+)
+
+print(missing_table_train)
+```
+
+**Para la data de datos de prueba:**
+
+```{r}
+head(df_test)
+
+missing_counts <- colSums(df_test == "(Missing)")
+missing_table_test <- data.frame(
+  Variable = names(missing_counts),
+  Missing_Count = as.numeric(missing_counts)
+)
+
+# Mostrar la tabla de valores faltantes
+print(missing_table_test)
+```
+
+2.3 Realice una tabla indicando los porcentages de valores faltantes en cada variable. Tener en cuenta que los valores faltantes estan como **(Missing)** y no como NA.
+
+**Para la data de datos de entrenamiento:**
+
+```{r}
+missing_percentage <- colSums(df_train == "(Missing)") / nrow(df_train) * 100
+missing_table1 <- data.frame(
+  Variable = names(missing_percentage),
+  Porcentaje_Faltantes = as.numeric(missing_percentage)
+)
+
+# tabla de porcentaje de valores faltantes
+print(missing_table1)
+```
+
+**Para la data de datos de prueba:**
+
+```{r}
+missing_percentage_test <- colSums(df_test == "(Missing)") / nrow(df_test) * 100
+
+missing_table_test <- data.frame(
+  Variable = names(missing_percentage_test),
+  Porcentaje_Faltantes = as.numeric(missing_percentage_test)
+)
+
+#tabla de porcentaje de valores faltantes
+print(missing_table_test)
+```
+
+2.4 Indique las variables que son de tipo character y de tipo numeric.
+
+**Para la data de datos de entrenamiento:**
+
+```{r}
+str(df_train)
+```
+
+**Para la data de datos de prueba:**
+
+```{r}
+str(df_test) 
+```
+
+```{r}
+table(df_test$Caters)
+```
+
+## 3. Preprocesamiento de los datos
+
+Considerando que stars es el rating que tiene un determinado restaurant, estamos enfocados en predecir dicha variable.
+
+En este caso los valores (Missing) los vamos a considerar como categórico además va ser nuestro nivel de referencia al momento de cambiar a factor nuestras variables cualitativas.
+
+3.1 Convierta todas las variables de tipo character en factor con nivel de referencia (Missing) en nuestra train data y test data.
+
+```{r}
+df_train$GoodForKids <- factor( df_train$GoodForKids  ) 
+df_train$GoodForKids <- relevel( df_train$GoodForKids , ref = "(Missing)" ) 
+
+# Completar de manera similar para las otras variables
+df_train$Alcohol <- factor(df_train$Alcohol)
+df_train$Alcohol <- relevel(df_train$Alcohol, ref = "(Missing)")
+
+df_train$BusinessAcceptsCreditCards <- factor(df_train$BusinessAcceptsCreditCards)
+df_train$BusinessAcceptsCreditCards <- relevel(df_train$BusinessAcceptsCreditCards, ref = "(Missing)")
+
+df_train$WiFi <-  factor(df_train$WiFi)
+df_train$WiFi <-  relevel(df_train$WiFi, ref = "(Missing)")
+
+df_train$BikeParking <-  factor(df_train$BikeParking)
+df_train$BikeParking <-  relevel(df_train$BikeParking, ref = "(Missing)")
+
+df_train$ByAppointmentOnly <-  factor(df_train$ByAppointmentOnly)
+df_train$ByAppointmentOnly <-  relevel(df_train$ByAppointmentOnly, ref = "(Missing)")
+
+df_train$WheelechairAccessible <-  factor(df_train$WheelechairAccessible)
+df_train$WheelechairAccessible <-  relevel(df_train$WheelechairAccessible, ref = "(Missing)")
+
+df_train$OutdoorSeating <-  factor(df_train$OutdoorSeating)
+df_train$OutdoorSeating <-  relevel(df_train$OutdoorSeating, ref = "(Missing)")
+
+df_train$RestaurantsReservations <-  factor(df_train$RestaurantsReservations)
+df_train$RestaurantsReservations <-  relevel(df_train$RestaurantsReservations, ref = "(Missing)")
+
+
+df_train$DogsAllowed <-  factor(df_train$DogsAllowed)
+df_train$DogsAllowed <-  relevel(df_train$DogsAllowed, ref = "(Missing)")
+
+df_train$Caters <-  factor(df_train$Caters)
+df_train$Caters <-  relevel(df_train$Caters, ref = "(Missing)")
+```
+
+Realice los mismo para el test data.
+
+```{r}
+# REALIZAR LO MISMO PARA LAS VARIABLES CUALITATIVAS DE df_test
+df_test$GoodForKids <- factor(df_test$GoodForKids)
+df_test$GoodForKids <- relevel(df_test$GoodForKids, ref = "(Missing)")
+
+df_test$Alcohol <- factor(df_test$Alcohol)
+df_test$Alcohol <- relevel(df_test$Alcohol, ref = "(Missing)")
+
+df_test$BusinessAcceptsCreditCards <- factor(df_test$BusinessAcceptsCreditCards)
+df_test$BusinessAcceptsCreditCards <- relevel(df_test$BusinessAcceptsCreditCards, ref = "(Missing)")
+
+df_test$WiFi <- factor(df_test$WiFi)
+df_test$WiFi <- relevel(df_test$WiFi, ref = "(Missing)")
+
+df_test$BikeParking <- factor(df_test$BikeParking)
+df_test$BikeParking <- relevel(df_test$BikeParking, ref = "(Missing)")
+
+df_test$ByAppointmentOnly <- factor(df_test$ByAppointmentOnly)
+df_test$ByAppointmentOnly <- relevel(df_test$ByAppointmentOnly, ref = "(Missing)")
+
+df_test$WheelechairAccessible <- factor(df_test$WheelechairAccessible)
+df_test$WheelechairAccessible<- relevel(df_test$WheelechairAccessible, ref = "(Missing)")
+
+df_test$OutdoorSeating <- factor(df_test$OutdoorSeating)
+df_test$OutdoorSeating <- relevel(df_test$OutdoorSeating, ref = "(Missing)")
+
+df_test$RestaurantsReservations <- factor(df_test$RestaurantsReservations)
+df_test$RestaurantsReservations <- relevel(df_test$RestaurantsReservations, ref = "(Missing)")
+
+df_test$DogsAllowed <- factor(df_test$DogsAllowed)
+df_test$DogsAllowed <- relevel(df_test$DogsAllowed, ref = "(Missing)")
+
+df_test$Caters <- factor(df_test$Caters)
+df_test$Caters <- relevel(df_test$Caters, ref = "(Missing)")
+```
+
+3.1(Opcional) Realice el procedimiento previo de otra forma.
+
+3.2 Cree dos nuevos data set para nuestros modelos de clasificación. Estos data sets van a ser usados para los modelos de clasificación.
+
+-   dfclass_train: data de entrenamiento para los modelos de clasificación.
+
+-   dfclass_test: data de prueba para los modelos de clsificación.
+
+```{r}
+dfclass_train <- data.frame(df_train)
+dfclass_test<- data.frame(df_test)
+```
+
+Estos nuevos data set van a tener una nueva variable cualitativa aboveFour, y la variable stars se eliminará.
+
+-   aboveFour: Cuando un restaurant tiene más de 4 estrellas.
+
+Para esto cree una nueva variable llamada aboveFour. Esta la crearemos desde la variable stars:
+
+-   aboveFour = 1: Cuando stars \>=4
+
+-   aboveFour = 0: Cuando stars \< 4
+
+Encuentre los indices donde stars es mayor o igual a 4 en los datos de entrenamiento y de manera similar para los datos de prueba.
+
+```{r}
+IsAboveFourTrain <- df_train$stars >= 4
+IsAboveFourTest <- df_test$stars >= 4
+```
+
+Ahora creamos la variable aboveFour y en los índices previos asigne el valor de 1 cuando IsAboveFourTrain es TRUE tanto en la train data como la test data.
+
+```{r}
+# CREAMOS aboveFour en dfclass_train
+dfclass_train$aboveFour[IsAboveFourTrain] <- 1
+dfclass_train$aboveFour[!IsAboveFourTrain] <- 0
+# CREAMOS aboveFour en dfclass_test
+dfclass_test$aboveFour[IsAboveFourTest] <- 1
+dfclass_test$aboveFour[!IsAboveFourTest] <- 0
+```
+
+Enseguida, eliminamos la variable stars de nuestra data de clasificación: dfclass_train y dfclass_test
+
+```{r}
+dfclass_train$stars <- NULL
+dfclass_test$stars <- NULL
+# VERIFICAMOS
+head(dfclass_train)
+head(dfclass_test)
+```
+
+# Modelos de regresión
+
+## 4. Construcción de los modelos
+
+En la parte de modelos de regresión solamente usamos los dataset df_test y df_train.
+
+-   Datos de entrenamiento: df_train.
+
+-   Datos de prueba: df_test.
+
+4.1 Realice una regresión lineal con todas las variables en nuestros datos de entrenamiento.
+
+```{r}
+modelLR <- lm(stars ~ ., data = df_train)
+summary(modelLR)
+```
+
+4.2 Realice una regresión usando **árboles de decisión para regresión**.
+
+```{r}
+library(caret)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+set.seed(500)
+
+treeReg = rpart(
+  stars ~ . , 
+  data = df_train, #datos de entrenamiento 
+  cp = 0.001 
+  )
+
+summary(treeReg) # Resumen del árbol de regresión
+```
+
+Graficamos nuestro árbol de decisión.
+
+```{r}
+plot(treeReg)
+```
+
+El valor de cp es un hiperparámetro, nuestro objetivo es encontrar el mejor de ellos para eso usamos cross validation.
+
+4.3 Realice una regresión usando **árboles de decisión para regresión usando cross validation**.
+
+```{r}
+# Grilla donde se realiza la busqueda
+model <- trainControl(method = "cv", number = 5 )
+grid <- expand.grid( cp = seq(0.0, 0.1, by = 0.0005) )
+```
+
+```{r}
+set.seed(123)
+treeCV <- train(stars ~ . ,
+                  data = df_train, 
+                  method = "rpart", 
+                  trControl = model, 
+                  tuneGrid = grid)
+
+treeRegCV <- treeCV$finalModel
+rpart.plot(treeRegCV, type = 5)
+```
+
+4.4 (Opcional) En caso de terminar todo la EC4 realice una regresión usando random forest y otra regresión usando xgboost.
+
+## 5. Evaluamos los modelos de regresión
+
+Para esto deteminamos los valores de R2 y MAE de nuestros modelos obtenidos previamente. Para esto realizamos predicciones en nuestros datos de entrenamiento y calculamos el R2 y el MAE sobre ellos.
+
+5.1 Calcule las métricas R2 y MAE de los modelos previos en los **datos de entrenamiento**.
+
+```{r}
+library(Metrics)
+# METRICAS PARA EL MODELO DE REGRESION LINEAL
+y_train_pred_LR <- predict(modelLR, df_train)
+
+R2_train_LR <- R2( y_train_pred_LR, df_train$stars)
+MAE_train_LR <- mae( y_train_pred_LR, df_train$stars )
+```
+
+```{r}
+# METRICAS PARA EL MODELO DE ARBOLES DE DECISION
+y_train_pred_tree <- predict(treeReg, df_train)
+
+R2_train_tree <- TODO
+MAE_train_tree <- TODO
+```
+
+```{r}
+# METRICAS PARA EL MODELO DE ARBOLES DE DECISION USANDO CV
+y_train_pred_treeCV <- predict(treeCV, df_train)
+
+R2_train_treeCV <- R2( y_train_pred_treeCV, df_train$stars)
+MAE_train_treeCV <- mae( y_train_pred_treeCV, df_train$stars )
+```
+
+```{r}
+# DATA FRAME ORDENANDO LOS VALORES OBTENIDOS
+metrics_train_df <- data.frame( model = c( "Linear Regression" ,
+                                     "Decision tree",
+                                     "Decision tree CV" ),
+                          Rsquared = c( R2_train_LR, R2_train_tree ,R2_train_treeCV ),
+                          MAE = c( MAE_train_LR, TODO, TODO )
+                          )
+
+metrics_train_df
+```
+
+5.2 Calcule las métricas R2 y MAE de los modelos previos en los **datos de prueba**.
+
+```{r}
+# METRICAS PARA EL MODELO DE REGRESION LINEAL EN LA TEST DATA
+y_test_LR <- # TODO
+
+R2_test_LR <- TODO
+MAE_test_LR <- TODO
+```
+
+```{r}
+# METRICAS PARA EL MODELO DE ARBOLES DE DECISION EN LA TEST DATA
+y_test_tree <- predict(treeReg, df_test)
+
+R2_test_tree <- TODO
+MAE_test_tree <- TODO
+```
+
+```{r}
+# METRICAS PARA EL MODELO DE ARBOLES DE DECISION CON C-V EN LA TEST DATA
+y_test_treeCV <- predict(treeCV, df_test)
+
+R2_test_treeCV <- TODO
+MAE_test_treeCV <- TODO
+```
+
+```{r}
+metrics_test_df <- data.frame( model = c( "Linear Regression" ,
+                                     "Decision tree",
+                                     "Decision tree CV" ),
+                          Rsquared = TODO,
+                          MAE = TODO
+                          )
+
+metrics_test_df
+```
+
+## 6. Conversión de nuestros modelos de regresión a modelos de clasificación
+
+Nos interesamos si un determinado establecimiento tiene más de 4 estrellas. Esto es posible usando nuestros modelos de regresión para esto modificamos los valores pronósticados en 0 o 1, de esta forma estamos modificando nuestro modelo de regresión a clasificación.
+
+6.1 Creamos 3 variables que nos indique si el valor pronósticado por nuestros modelos es mayor a 4 o no, las variables son:
+
+-   y_test_LR_train = 1: Cuando y_test_LR \>=4
+
+<!-- -->
+
+-   y_test_tree_train = 1: Cuando y_test_tree\>=4
+
+-   y_test_treeCV_train = 1: Cuando y_test_treeCV \>=4
+
+```{r}
+y_test_LR_bin <- ifelse( y_test_LR >= 4, 1, 0 )
+y_test_tree_bin <- TODO
+y_test_treeCV_bin <- TODO
+```
+
+Determinamos el error R2 y el MAE entre lo pronósticado por nuestros modelos y los verdaderos valores para esto use el **dataset de prueba de clasificación dfclass_test.**
+
+```{r}
+# MODELO DE REGRESION LINEAL
+R2_test_LR_bin <- R2(dfclass_test$aboveFour ,y_test_LR_bin) 
+MAE_test_LR_bin <-  mae(dfclass_test$aboveFour, y_test_LR_bin)
+
+# MODELO DE ARBOLES DE DECISION 
+R2_test_tree_bin <- TODO
+MAE_test_tree_bin <- TODO
+
+# MODELO DE ARBOLES DE DECISION CON C-V
+R2_test_treeCV_bin <- R2(dfclass_test$aboveFour, y_test_treeCV_bin )
+MAE_test_treeCV_bin <- mae(dfclass_test$aboveFour , y_test_treeCV_bin)
+
+metrics_test_df_bin <- data.frame( 
+  Model = c("Linear Regression",
+            "Decision tree",
+            "Decision tree CV"),
+  Rsquared = c( R2_test_LR_bin, R2_test_tree_bin , R2_test_treeCV_bin ),
+  MAE = c( MAE_test_LR_bin, MAE_test_tree_bin, MAE_test_treeCV_bin)
+                              )
+metrics_test_df_bin
+```
+
+6.2 Indique si las métricas previas son útiles en este caso.
+
+6.3 Como los valores pronósticados ahora son binarios necesitamos evaluar esto con una matriz de confusión y las métricas asociadas. Además, necesitamos comparar esto con un modelo de base o baseline model.
+
+Creamos nuestro modelo de base a partir de nuestros datos de entrenamiento el cual **solamente asigna un valor a todos los datos y dicho valor es el de la clase predominante.** Para esto determinamos la clase mayoritaria en los datos de entrenamiento.
+
+```{r}
+library(caret)
+
+# GUARDAMOS LA CLASE MAYORITARIA EN TRAIN DATA
+majorClass <- TODO
+```
+
+La creación de nuestro modelo es fácil de crear de hecho este va ser solamente un vector con un valor dado, dicho vector lo llamamos: y_test_baseline.
+
+-   Cree y_test_baseline vector de talla de dfclass_test cuyo único valor es majorClass.
+
+-   Convierta enseguida y_test_baseline a factor con levels = c(0,1)
+
+-   Convierta dfclass_test\$aboveFour a factores con levels = c(0,1)
+
+```{r}
+# COMENTARIO AQUI
+y_test_baseline <- TODO
+
+# COMENTARIO AQUI
+y_test_baseline <- factor(y_test_baseline, levels = c(0, 1))
+
+# COMENTARIO AQUI
+dfclass_test$aboveFour <- TODO
+```
+
+Por lo tanto, nuestro modelo de base etiqueta a todos con el valor de 0. Enseguida, evaluamos dicho modelo en nuestros datos de prueba.
+
+-   Obtenga una matriz de confusión entre: **y_test_baseline y** **dfclass_test\$aboveFour**
+
+```{r}
+# COMENTARIO AQUI
+matrixCM_baseline <- confusionMatrix(data = y_test_baseline , 
+                           reference = dfclass_test$aboveFour)
+
+matrixCM_baseline
+```
+
+La matriz previa nos ayuda como referencia y es claro que cualquier modelo debe de ser mucho mejor que este. Luego, para comparar las matrices de confusión con los modelos de regresión usados como clasificación.
+
+6.4 Obtenga las matrices de clasificación de los modelos regresión: Lineal, árboles de decisión y árboles de desición usando cross-validation.
+
+```{r}
+# MATRIZ DE CONFUSION PARA REGRESION LINEAL EN LA TEST DATA DE CLASIFICACION
+y_test_LR_bin <-  factor(y_test_LR_bin, levels = c(0,1))
+
+matrixCM_test_LR <- confusionMatrix(data = y_test_LR_bin, 
+                           reference = TODO)
+
+matrixCM_test_LR
+```
+
+```{r}
+# MATRIZ DE CONFUSION PARA ARBOLES DE DECISION EN LA TEST DATA DE CLASIFICACION
+y_test_tree_bin <-  factor(y_test_tree_bin, levels = c(0,1))
+
+matrixCM_test_tree <- confusionMatrix(data = TODO, 
+                           reference = dfclass_test$aboveFour)
+
+matrixCM_test_tree
+```
+
+```{r}
+# MATRIZ DE CONFUSION PARA ARBOLES DE DECISION USANDO CV EN LA TEST DATA DE CLASIFICACION
+y_test_treeCV_bin <- TODO
+
+matrixCM_test_treeCV <- confusionMatrix(data = TODO, 
+                           reference = TODO)
+
+matrixCM_test_treeCV
+```
+
+6.5 Realice una tabla con las métricas accuracy, sensitivity and specificity con respecto a cada uno de los cuatro modelos previos: baseline model, linear regression, decision tree and decision tree using CV, estos valores se encuentran en las 4 matrices de confusion previas.
+
+# Modelos de Clasificación
+
+Ahora usamos diversos modelos de clasificación para determinar si un restaurante dado tiene cuatro o más de calificación. El proceso es similar a los modelos de regresión, comenzamos construyendo los modelos de clasificación y luego determinamos sus métricas, finalmente realizamos un resumen realizando una tabla.
+
+## 7. Regresión logística
+
+En lo que sigue usamos los datasets: **dfclass_train, dfclass_test.**
+
+7.1 Realice una regresión logística usando los datos de entrenamiento **dfclass_train.**
+
+```{r}
+# Cambiamos a factor aboveFour con levels c(0,1).
+dfclass_test$aboveFour <- factor( dfclass_test$aboveFour, levels = c(0, 1) )
+dfclass_train$aboveFour <- factor( dfclass_train$aboveFour, levels = c(0, 1) )
+
+model2 <- glm( TODO )
+
+summary(model2)
+```
+
+7.2 Realizamos los pronósticos de nuestra data en dfclass_train y dfclass_test por separado y luego los evaluamos. Para esto determinamos las probabilidades de la regresión logística y luego con un umbral de 0.5 realizamos las predicciones de las etiquetas de aboveFour.
+
+```{r}
+# Predicción en data de entrenamiento
+# Predicción de las probabilidades en nuestros datos de entrenamiento
+y_train_reglog <- predict(model2, dfclass_train, type = "response")
+
+# Predicción de los valores(0 o 1) en nuestros datos de entrenamiento
+y_train_reglog_bin <- ifelse( y_train_reglog >= 0.5, 1, 0 )
+
+# Predicción en data de prueba
+# Predicción de las probabilidades en nuestros datos de prueba
+y_test_reglog <- predict(model2, dfclass_test, type = "response")
+
+# Predicción de los valores(0 o 1) en nuestros datos de prueba
+y_test_reglog_bin <- ifelse( y_test_reglog >= 0.5, 1, 0 )
+```
+
+7.3 Obtenga las matrices de confusión tanto para los pronósticos en los datos de entrenamiento como de prueba.
+
+```{r}
+# matriz de confusion: dfclass_train vs y_train_reglog_bin
+y_train_reglog_bin <-  factor(y_train_reglog_bin, levels = c(0,1))
+
+matrixCM_train_reglog <- confusionMatrix(data = y_train_reglog_bin, 
+                           reference = dfclass_train$aboveFour)
+
+matrixCM_train_reglog
+```
+
+```{r}
+# matriz de confusion: dfclass_train vs y_test_reglog_bin
+y_test_reglog_bin <-  factor(y_test_reglog_bin, levels = c(0, 1))
+
+matrixCM_test_reglog <- confusionMatrix(data = TODO, 
+                           reference = TODO)
+
+matrixCM_test_reglog
+```
+
+7.4 Determine la curva ROC e indique la utilidad de esta.
+
+```{r}
+# TODO
+```
+
+7.5 Determine el mejor valor del umbral usando le método de Youden y el método del punto más cercano a la esquina superior izquierda.
+
+```{r}
+# TODO
+```
+
+## 8. Arboles de decisión para clasificación
+
+Ahora usamos árboles de decisión para clasificación.
+
+8.1 Construimos el árbol de decisión, indique la diferencia entre el código para el árbol de decisión para regresión. Recuerde que esta se construye con los datos de entrenamiento.
+
+```{r}
+set.seed(88)
+
+treeClass <- rpart(aboveFour ~ . , 
+  data = # TODO, 
+  method = "class", # Clasificacion
+  control = rpart.control(minsplit = 5),
+  cp=0.01)
+
+summary(treeClass) # Resumen del árbol de regresión
+```
+
+```{r}
+rpart.plot(treeClass)
+```
+
+8.2 Predecimos en los datos de entrenamiento y de prueba.
+
+```{r}
+# Predecimos los valores en nuestros datos de entrenamiento
+y_train_pred_classTree <- predict(treeClass, dfclass_train, type = "class")
+
+# Predecimos los valores en nuestros datos de entrenamiento
+y_test_pred_classTree <- # TODO
+```
+
+8.3 Obtenemos las matrices de confusión, siguiendo el mismo formato de las preguntas previas.
+
+```{r}
+# Matriz de confusión: dfclass_train vs y_train_pred_classTree
+y_train_pred_classTree <-  factor(y_train_pred_classTree, levels = c(0,1))
+
+matrixCM_train_classTree <- # TODO
+
+matrixCM_train_classTree
+```
+
+```{r}
+# Matriz de confusión: dfclass_test vs y_test_pred_classTree
+y_test_pred_classTree <-  factor(y_test_pred_classTree, levels = c(0,1))
+
+matrixCM_test_classTree <- # TODO
+
+matrixCM_test_classTree
+```
+
+8.4 Construimos un árbol decisión para clasificacion usando cross validation.
+
+```{r}
+model <- trainControl(method = "cv", number = 5)
+grid <- expand.grid(cp = seq(0.0, 0.1, by = 0.0005))
+
+treeClassCV <- train( aboveFour ~ . ,
+                  data = dfclass_train, 
+                  method = "rpart", 
+                  trControl = model, 
+                  tuneGrid = grid)
+```
+
+8.5 Realizamos predicciones en los datos de entrenamiento y de prueba.
+
+```{r}
+library(caret)
+# Predicciones en nuestros datos de entrenamiento
+y_train_pred_classTreeCV <- predict(treeClassCV, dfclass_train)
+
+# Predicciones en nuestros datos de prueba
+y_test_pred_classTreeCV <- # TODO
+```
+
+8.6 Construimos las matrices de confusión para ambas predicciones.
+
+```{r}
+# COMENTE AQUI
+y_train_pred_classTreeCV <-  factor(y_train_pred_classTreeCV, levels = c(0,1))
+
+matrixCM_train_classTreeCV <- # TODO
+
+matrixCM_train_classTreeCV
+```
+
+```{r}
+# COMENTE AQUI
+y_test_pred_classTreeCV <-  factor(y_test_pred_classTreeCV, levels = c(0,1))
+df_test$aboveFour <- factor(dfclass_test$aboveFour, levels = c(0, 1))
+
+
+matrixCM_test_classTreeCV <- # TODO
+
+matrixCM_test_classTreeCV
+```
+
+## 9. Random forest para clasificación
+
+9.1 Usamos random forest en nuestros datos de entrenamiento.
+
+```{r}
+# DEMORA UNOS MINUTOS
+control <- trainControl( method = "cv", number = 5)
+metric <- accuracy
+tuneGrid <- expand.grid( .mtry = c(1:10)  )
+
+rfClass <- train( aboveFour ~ . ,
+                  data = #TODO,
+                  method = 'rf',
+                  tuneGrid = tuneGrid,
+                  trControl = control) 
+```
+
+9.2 Veamos la importancia de las variables.
+
+```{r}
+varImp(rfClass)
+```
+
+9.3 Realizamos predicciones en nuestros datos de entrenamiento y de prueba, y enseguida obtenemos las matrices de confusión.
+
+```{r}
+# REALIZAMOS PREDICCIONES EN NUESTROS DATOS DE ENTRENAMIENTOS
+pred_rf <- predict( rfClass, TODO )
+
+# Matriz de confusion entre: pred_rf vs dfclass_test$aboveFour                   
+confusionMatrix( data = TODO , reference = TODO )
+```
+
+9.4 Finalmente, graficamos la curva ROC de dicho modelos.
+
+```{r}
+library(pROC)
+
+pred_for_ROC <- predict( rfClass, df_test , type = 'prob')
+ROC_rf <- roc(df_test$aboveFour, pred_for_ROC[,2])
+ROC_rf_AUC <- auc(ROC_rf)
+
+plot(ROC_rf)
+```
+
+## 10. (Opcional) XGBOOST para clasificación
+
+Para esta parte necesitamos algunas librerías previas para el preprocesamiento.
+
+10.1 Cargamos las librerías
+
+```{r}
+library(caret)
+library(xgboost)
+library(mltools)
+library(data.table)
+library(ggplot2)
+```
+
+10.2 El preprocesamiento lo dividimos en dos: Una para Y : aboveFour, y otra para X: las otras variables. Comenzamos para las variables independientes. Para esto creamos variables dummy en las variables cualitativas a excepción de la variable dependiente aboveFour.
+
+```{r}
+dummy <- dummyVars( " ~ . " , data = dfclass_train[,-13] )
+X_dummy <- data.frame( predict(dummy, newdata = dfclass_train[,-13]) )
+X_dummy
+```
+
+Enseguida, unimos las varaibles dummy con la variable Y
+
+```{r}
+Y <-  dfclass_train[,13]
+
+dfclass_train_dummy <- cbind( X_dummy, Y )
+colnames(dfclass_train_dummy)[37] <- "aboveFour"
+dfclass_train_dummy$aboveFour <- as.factor(dfclass_train_dummy$aboveFour)
+```
+
+Realizamos lo mismo para nuestro dfclass_test
+
+```{r}
+dummy <- dummyVars( " ~ . " , data = dfclass_test[,-13] )
+X_dummy <- data.frame( predict(dummy, newdata = dfclass_test[,-13]) )
+X_dummy
+```
+
+```{r}
+Y <-  dfclass_test[,13]
+
+dfclass_test_dummy <- cbind( X_dummy, Y )
+colnames(dfclass_test_dummy)[37] <- "aboveFour"
+dfclass_test_dummy$aboveFour <- as.factor(dfclass_test_dummy$aboveFour)
+```
+
+10.3 Configuramos los parámetros iniciales para usar XGBoost con cross-validation
+
+```{r}
+grid_tune <- expand.grid(
+  nrounds = c(500,1000,1500),
+  max_depth = c(2,4,6),
+  eta = 0.3,
+  gamma = 0,
+  colsample_bytree = 1,
+  min_child_weight = 1,
+  subsample = 1 
+)
+
+
+train_control <- trainControl(
+  method ='cv',
+  number = 3,
+  verboseIter = TRUE,
+  allowParallel = TRUE)
+```
+
+10.4 Entrenamos nuestro modelo con los datos de entrenamiento
+
+```{r}
+# DEMORA UNOS MINUTOS
+xgb_tune <- train( x = dfclass_train_dummy[,-37],
+                   y = dfclass_train_dummy[,37],
+                   trControl = train_control,
+                   tuneGrid = grid_tune,
+                   method = "xgbTree",
+                   verbose = TRUE)
+xgb_tune
+```
+
+10.5 Obtenemos que nuestro mejor modelo es
+
+```{r}
+bestXGBoost <- xgb_tune$bestTune
+```
+
+Usamos los parámetros de este modelo para construir el modelo final.
+
+```{r}
+train_control <- trainControl(method = "none",
+                              verboseIter = TRUE,
+                              allowParallel = TRUE)
+
+final_grid <- expand.grid( nrounds = bestXGBoost$nrounds,
+                           eta = bestXGBoost$eta,
+                           max_depth = bestXGBoost$max_depth,
+                           gamma = bestXGBoost$gamma,
+                           colsample_bytree = bestXGBoost$colsample_bytree,
+                           min_child_weight = bestXGBoost$min_child_weight,
+                           subsample = bestXGBoost$subsample)
+
+xgb_model <- train( x = dfclass_train_dummy[,-37],
+                    y = dfclass_train_dummy[,37],
+                    trControl = train_control,
+                    tuneGrid = final_grid,
+                    method = "xgbTree",
+                    verbose = TRUE)
+```
+
+10.6 Realizamos las predicciones en nuestro datos de prueba y obtenemos la matriz de confusión.
+
+```{r}
+# Comente aqui
+xgb_predict <- predict(xgb_model, dfclass_test_dummy)
+
+# Comente aqui
+confusionMatrix(as.factor(as.numeric(xgb_predict)),
+                as.factor(as.numeric(dfclass_test_dummy$aboveFour)))
+```
+
+# 11. Compare los modelos
+
+11.1 Compare los modelos de regresión en una tabla según sus métricas.
+
+11.2 Compare los modelos de clasificaciónen una tabla según sus métricas.
